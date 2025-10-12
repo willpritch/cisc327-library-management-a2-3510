@@ -26,7 +26,6 @@ def add_book_to_catalog(title: str, author: str, isbn: str, total_copies: int) -
     Returns:
         tuple: (success: bool, message: str)
     """
-    # Input validation
     if not title or not title.strip():
         return False, "Title is required."
     
@@ -45,12 +44,11 @@ def add_book_to_catalog(title: str, author: str, isbn: str, total_copies: int) -
     if not isinstance(total_copies, int) or total_copies <= 0:
         return False, "Total copies must be a positive integer."
     
-    # Check for duplicate ISBN
+
     existing = get_book_by_isbn(isbn)
     if existing:
         return False, "A book with this ISBN already exists."
     
-    # Insert new book
     success = insert_book(title.strip(), author.strip(), isbn, total_copies, total_copies)
     if success:
         return True, f'Book "{title.strip()}" has been successfully added to the catalog.'
@@ -59,38 +57,36 @@ def add_book_to_catalog(title: str, author: str, isbn: str, total_copies: int) -
 
 def borrow_book_by_patron(patron_id: str, book_id: int) -> Tuple[bool, str]:
 
-    # validate patron id
+
     if not re.fullmatch(r"\d{6}", str(patron_id or "")):
         return False, "Invalid patron ID (must be exactly 6 digits)."
 
-    # book exists & availability
+    
     book = get_book_by_id(book_id)
     if not book:
         return False, "Book not found."
     if book.get("available_copies", 0) <= 0:
         return False, "This book is currently not available."
 
-    # active borrow count
+  
     current_count = get_patron_borrow_count(patron_id) or 0
     if current_count >= 5:
         return False, "You have reached the maximum borrowing limit of 5 books."
 
-    # (optional) prevent duplicate active borrow of same book
-    # If your database.py has a helper like patron_has_active_borrow(patron_id, book_id), use it:
+    
     try:
-        from database import patron_has_active_borrow  # type: ignore
+        from database import patron_has_active_borrow  
         if patron_has_active_borrow(patron_id, book_id):
             return False, "You already have this book borrowed."
     except Exception:
-        pass  # helper not present; skip this check
+        pass  
 
-    # create borrow record (14-day due)
+    
     borrow_date = datetime.now()
     due_date = borrow_date + timedelta(days=14)
     if not insert_borrow_record(patron_id, book_id, borrow_date, due_date):
         return False, "Database error occurred while creating borrow record."
 
-    # decrement availability
     if not update_book_availability(book_id, -1):
         return False, "Database error occurred while updating book availability."
 
@@ -98,21 +94,17 @@ def borrow_book_by_patron(patron_id: str, book_id: int) -> Tuple[bool, str]:
 
 def return_book_by_patron(patron_id: str, book_id: int) -> Tuple[bool, str]:
     
-    # If your DB exposes a direct "active borrow" check, use it to validate:
+    
     try:
-        from database import get_active_borrow  # type: ignore
+        from database import get_active_borrow  
         if not get_active_borrow(patron_id, book_id):
             return False, "No active borrow record for this patron/book."
     except Exception:
-        # If we don't have a checker, proceed to set a return date; DB layer should fail safely if no row exists.
         pass
-
-    # mark returned
+    
     return_ok = update_borrow_record_return_date(patron_id, book_id, datetime.now())
     if not return_ok:
         return False, "Failed to update borrow record with return date."
-
-    # increment availability
     book = get_book_by_id(book_id)
     if book:
         if not update_book_availability(book_id, +1):
@@ -122,17 +114,15 @@ def return_book_by_patron(patron_id: str, book_id: int) -> Tuple[bool, str]:
 
 
 def calculate_late_fee_for_book(patron_id: str, book_id: int) -> Dict:
-    
-    # Try to fetch an active or last borrow record using DB helpers if available
     rec = None
     try:
-        from database import get_active_borrow  # type: ignore
+        from database import get_active_borrow  
         rec = get_active_borrow(patron_id, book_id)
     except Exception:
         pass
     if rec is None:
         try:
-            from database import get_last_borrow  # type: ignore
+            from database import get_last_borrow  
             rec = get_last_borrow(patron_id, book_id)
         except Exception:
             pass
@@ -183,10 +173,9 @@ def search_books_in_catalog(search_term: str, search_type: Optional[str] = None)
             if q.lower() in author:
                 out.append(b)
         elif t == "isbn":
-            if q == isbn:  # exact match only
+            if q == isbn:  
                 out.append(b)
         else:
-            # unknown type → act like flexible (title/author)
             if q.lower() in title or q.lower() in author:
                 out.append(b)
     return out
@@ -199,7 +188,6 @@ def get_patron_status_report(patron_id: str) -> Dict:
     current = getattr(db, "get_active_borrows_for_patron", lambda *_: [])(patron_id)
     history = getattr(db, "get_borrows_for_patron", lambda *_: [])(patron_id)
 
-    # compute fees for active items (optional, to show a number)
     total_fees = 0.0
     for rec in current:
         borrow_dt = rec["borrow_date"]
