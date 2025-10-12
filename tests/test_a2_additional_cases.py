@@ -47,3 +47,6 @@ def test_patron_status_page_loads(client):
     """Ensure patron status page renders for valid patron ID."""
     r = client.get("/patron/123456/status")
     assert r.status_code in (200, 404)
+    
+    
+   

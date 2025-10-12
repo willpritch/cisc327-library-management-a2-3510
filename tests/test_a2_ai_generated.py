@@ -1,4 +1,4 @@
-# tests/test_a2_ai_generated.py
+ # tests/test_a2_ai_generated.py
 """
 AI-Generated Tests (Step 3)
 These were created using ChatGPT suggestions for Assignment 2 Step 3.
