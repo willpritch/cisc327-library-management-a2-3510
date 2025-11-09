@@ -1,4 +1,6 @@
+ 
  # tests/test_a2_ai_generated.py
+
 """
 AI-Generated Tests (Step 3)
 These were created using ChatGPT suggestions for Assignment 2 Step 3.
@@ -18,7 +20,7 @@ def test_ai_generated_return_without_borrow(client):
 
 def test_ai_generated_late_fee_max_cap(client):
     """AI suggested: simulate a book 40 days overdue and ensure fee caps at $15."""
-    from library_service import calculate_late_fee_for_book
+    from services.library_service import calculate_late_fee_for_book
     # Simulate manually
     fake_patron = "123456"
     fake_book = 1

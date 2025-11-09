@@ -1,6 +1,7 @@
 import pytest
 from importlib import reload
-import database, library_service
+import database
+from services import library_service
 from app import create_app  
 
 @pytest.fixture()

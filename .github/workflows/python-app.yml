@@ -20,9 +20,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flask pytest pytest-cov
+          pip install -r requirements.txt
+          # In case requirements.txt is missing dev deps, ensure test deps too:
+          pip install pytest pytest-cov pytest-mock
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          pytest --maxfail=1 --disable-warnings -q
+          pytest --cov=. --cov-report=term-missing --disable-warnings -q
+
+      - name: Enforce coverage threshold (optional)
+        run: |
+          coverage xml
+          python - <<'PY'
+import xml.etree.ElementTree as ET
+t = ET.parse('coverage.xml').getroot()
+rate = float(t.get('line-rate')) * 100
+print(f"Coverage: {rate:.1f}%")
+assert rate >= 70, "Coverage below 70%"
+PY
+
 

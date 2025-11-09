@@ -152,7 +152,7 @@ def calculate_late_fee_for_book(patron_id: str, book_id: int) -> Dict:
 
 
 def search_books_in_catalog(search_term: str, search_type: Optional[str] = None) -> List[Dict]:
-   
+
     q = (search_term or "").strip()
     if not q:
         return []
@@ -207,3 +207,40 @@ def get_patron_status_report(patron_id: str) -> Dict:
         "history": history,
         "total_fees": round(total_fees, 2),
     }
+    
+    # --- NEW FOR A3 ---
+
+def pay_late_fees(patron_id: str, book_id: int, payment_gateway) -> tuple[bool, str]:
+    
+    if not patron_id or not str(patron_id).isdigit():
+        return False, "Invalid patron ID."
+    fee_info = calculate_late_fee_for_book(patron_id, book_id)
+    if not fee_info or fee_info.get("fee", 0) <= 0:
+        return False, "No late fee to pay."
+
+    try:
+        result = payment_gateway.process_payment(patron_id, fee_info["fee"])
+        if result and result.get("status") == "success":
+            return True, "Payment successful."
+        return False, "Payment declined."
+    except Exception as e:
+        return False, f"Error: {e}"
+
+def refund_late_fee_payment(transaction_id: str, amount: float, payment_gateway) -> tuple[bool, str]:
+    """
+    Call payment_gateway.refund_payment(transaction_id, amount) with basic guards.
+    Returns (ok, message).
+    """
+    if not transaction_id:
+        return False, "Invalid transaction ID."
+    if amount is None or amount <= 0 or amount > 15:
+        return False, "Invalid refund amount."
+
+    try:
+        result = payment_gateway.refund_payment(transaction_id, amount)
+        if result and result.get("status") == "refund_success":
+            return True, "Refund successful."
+        return False, "Refund declined."
+    except Exception as e:
+        return False, f"Error: {e}"
+
