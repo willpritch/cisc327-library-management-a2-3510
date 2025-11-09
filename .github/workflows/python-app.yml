@@ -31,12 +31,6 @@ jobs:
       - name: Enforce coverage threshold (optional)
         run: |
           coverage xml
-          python - <<'PY'
-import xml.etree.ElementTree as ET
-t = ET.parse('coverage.xml').getroot()
-rate = float(t.get('line-rate')) * 100
-print(f"Coverage: {rate:.1f}%")
-assert rate >= 70, "Coverage below 70%"
-PY
+          python - <<'PY'import xml.etree.ElementTree as ET t = ET.parse('coverage.xml').getroot() rate = float(t.get('line-rate')) * 100 print(f"Coverage: {rate:.1f}%") assert rate >= 70, "Coverage below 70%" PY
 
 
