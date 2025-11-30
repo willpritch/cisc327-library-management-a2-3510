@@ -22,32 +22,28 @@ def catalog():
     books = get_all_books()
     return render_template('catalog.html', books=books)
 
-@catalog_bp.route('/add_book', methods=['GET', 'POST'])
+
+@catalog_bp.route("/add_book", methods=["GET", "POST"])
 def add_book():
-    """
-    Add a new book to the catalog.
-    Web interface for R1: Book Catalog Management
-    """
-    if request.method == 'GET':
-        return render_template('add_book.html')
-    
-    # POST request - process form data
-    title = request.form.get('title', '').strip()
-    author = request.form.get('author', '').strip()
-    isbn = request.form.get('isbn', '').strip()
-    
-    try:
-        total_copies = int(request.form.get('total_copies', ''))
-    except (ValueError, TypeError):
-        flash('Total copies must be a valid positive integer.', 'error')
-        return render_template('add_book.html')
-    
-    # Use business logic function
-    success, message = add_book_to_catalog(title, author, isbn, total_copies)
-    
-    if success:
-        flash(message, 'success')
-        return redirect(url_for('catalog.catalog'))
-    else:
-        flash(message, 'error')
-        return render_template('add_book.html')
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        author = request.form.get("author", "").strip()
+        isbn = request.form.get("isbn", "").strip()
+        total_copies_raw = request.form.get("total_copies", "").strip()
+
+        try:
+            total_copies = int(total_copies_raw)
+        except ValueError:
+            flash("Total copies must be a positive integer.", "error")
+            return render_template("add_book.html")
+
+        success, message = add_book_to_catalog(title, author, isbn, total_copies)
+
+        if success:
+            flash(message, "success")
+            return redirect(url_for("catalog.catalog"))
+        else:
+            flash(message, "error")
+            return render_template("add_book.html")
+
+    return render_template("add_book.html")
